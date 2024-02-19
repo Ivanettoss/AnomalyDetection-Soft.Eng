@@ -9,7 +9,7 @@ std::vector<int> exclusionCalc(std::vector<std::string>& current_row){
 
     cout << "Di seguito verranno presentati i campi rilevati, premere S o N da tastiera per decidere se includerli nel DB" << endl;
 
-    for (int i = 0; i < current_row.size(); ++i) {
+    for (long unsigned int i = 0; i < current_row.size(); ++i) {
         char choice;
 
         cout << "Includere il campo " << i << " (" << current_row[i] << ")? [S/N]: ";
@@ -37,7 +37,7 @@ std::vector<int> exclusionCalc(std::vector<std::string>& current_row){
 vector<string> excludeElements(const vector<string>& current_row, const vector<int>& exclude_indices) {
     vector<string> result;
 
-    for (int i = 0; i < current_row.size(); ++i) {
+    for (long unsigned int i = 0; i < current_row.size(); ++i) {
         if (find(exclude_indices.begin(), exclude_indices.end(), i) != exclude_indices.end()) {
             result.push_back(current_row[i]);
         }

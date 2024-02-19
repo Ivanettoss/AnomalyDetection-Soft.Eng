@@ -73,9 +73,10 @@ int init(int argc, char* argv[])
 
     fclose(file);
 
-    for (int i = 0; i < fields.size(); i++){
-        printLine(fields[i]);
+    for (long unsigned int i = 0; i < fields.size(); i++){
+        if (fields[i].size() > 1){
+            printLine(fields[i]);
+        }
     }
-
     return 0;
 }
