@@ -1,7 +1,7 @@
 # Definizione delle variabili
 CXX = g++
-CXXFLAGS = -Wall -Wextra -g
-SRC = init.cpp main.cpp lineUtils.cpp exclusion.cpp
+CXXFLAGS = -Wall -Wextra -g -lm -I. -I/usr/include/postgresql -lpq
+SRC = init.cpp main.cpp lineUtils.cpp exclusion.cpp QueryGenerator.cpp con2db/pgsql.cpp
 OBJ = $(SRC:.cpp=.o)
 EXECUTABLE = main
 
