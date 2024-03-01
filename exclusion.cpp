@@ -1,5 +1,3 @@
-#include <iostream>
-#include <algorithm>
 #include "main.h"
 
 using namespace std;

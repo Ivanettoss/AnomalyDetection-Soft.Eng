@@ -16,6 +16,6 @@ all:	$(objects)
 	$(CC) -c -o $@ $< $(CPPFLAGS) 
 
 clean:
-	rm *.o 
+	rm -f $(CURDIR)/*.o 
 
 

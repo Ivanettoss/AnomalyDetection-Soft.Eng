@@ -1,6 +1,4 @@
 #include "main.h"
-#include <iostream>
-#include <cstring>
 
 void buildLine(char* buffer, std::vector<std::string>& fields){
     char *token = strtok(buffer, ";");
@@ -36,4 +34,10 @@ int findDomain(std::vector<std::string>& fields, std::string comp) {
 void readLine(char* buffer, int buffer_size, FILE* file){
     fgets(buffer, buffer_size, file);
     buffer[strcspn(buffer, "\n")] = '\0';
+}
+
+char* stringToChar(std::string str){
+    char* converted = new char[str.length() + 1];
+    strcpy(converted, str.c_str());
+    return converted;
 }
