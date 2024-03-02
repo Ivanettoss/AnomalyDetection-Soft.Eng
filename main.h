@@ -17,7 +17,11 @@
 #define BUFFER_SIZE 512
 #define DEBUGL 1
 #define VARCHARDIM "50"
-#define STREAM_NAME "example-stream"
+#define PSQL_NAME "lollo"
+#define PSQL_PASS "lollo"
+#define PSQL_PORT "5432"
+#define PSQL_DB "AnomalyDetection"
+#define PSQL_SERVER "localhost"
 
 int init(int argc, char* argv[]);
 
@@ -30,9 +34,13 @@ int findDomain(std::vector<std::string>& fields, std::string comp);
 std::vector<int> exclusionCalc(std::vector<std::string>& current_row);
 std::vector<std::string> excludeElements(const std::vector<std::string>& current_row, const std::vector<int>& exclude_indices);
 
-void init_log(std::vector<std::string> current_row);
+Con2DB init_connection(const char* server, const char* port, const char* name, const char* pass, const char* db_name);
+int endConnection(Con2DB db);
+void init_log(Con2DB db, std::vector<std::string> current_row);
 
+int checkTable(Con2DB db, std::string name);
 int createTable(Con2DB db, std::string name, std::vector<std::string> fields);
+void dropTable(Con2DB db, std::string name);
 
 int test(redisContext *context);
 #endif

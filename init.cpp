@@ -1,4 +1,5 @@
 #include "main.h"
+#define WRITE_STREAM "stream_1"
 
 using namespace std;
 
@@ -14,11 +15,6 @@ int init(int argc, char *argv[])
     printf("main(): pid %d: connecting to redis ...\n", pid);
     c2r = redisConnect("localhost", 6379);
     printf("main(): pid %d: connected to redis\n", pid);
-    test(c2r);
-
-    return 0;
-
-
 
     // Aumentare la grandezza del buffer se argc è 3
     if (argc > 2)
@@ -59,17 +55,18 @@ int init(int argc, char *argv[])
 
     readLine(buffer, buffer_size, file);
     buildLine(buffer, current_row);
-
     vector<int> disabled_fields = exclusionCalc(current_row);
     current_row = excludeElements(current_row, disabled_fields);
 
     // Ora ho tutti i campi esclusi quelli che l'utente non vuole, devo chiamare init_log e preparare la tabella
-    init_log(current_row);
-
+    Con2DB db = init_connection(PSQL_SERVER, PSQL_PORT, PSQL_NAME, PSQL_PASS, PSQL_DB);
+    init_log(db, current_row);
+    
     matrix.push_back(current_row);
 
     // Leggi il file riga per riga
-    // Ciò che avviene qui dentro deve riguardare in qualche modo redis, che riceve i dati.
+    initStreams(c2r, WRITE_STREAM);
+    int entry_counter = 0;
     while (true)
     {
         // PULISCI IL BUFFER DELLA RIGA
@@ -82,14 +79,23 @@ int init(int argc, char *argv[])
         { // Se la riga è vuota o contiene solo caratteri di terminazione
             break;
         }
+        entry_counter++;
+        printf("RIGA85 RAGGIUNTA");
+
         // ESCLUDI GLI ELEMENTI CHE L'UTENTE NON VUOLE
         current_row = excludeElements(current_row, disabled_fields);
+    
+        reply = RedisCommand(c2r, "XADD %s * entry:%d mem:%s", WRITE_STREAM, entry_counter, buffer);
+        assertReplyType(c2r, reply, REDIS_REPLY_STRING);
+        printf("main(): pid =%d: Added entry:%d -> mem:%s (id: %d)\n", pid, entry_counter, reply->str, entry_counter);
+        freeReplyObject(reply);
+
         // PUSH NELLA MATRICE DELLA RIGA CORRETTA
         matrix.push_back(current_row);
     }
 
     fclose(file);
-
+    /*
     for (long unsigned int i = 0; i < matrix.size(); i++)
     {
         if (matrix[i].size() > 1)
@@ -97,5 +103,7 @@ int init(int argc, char *argv[])
             printLine(matrix[i]);
         }
     }
-    return 0;
+    */
+   int ret = endConnection(db);
+    return ret;
 }
