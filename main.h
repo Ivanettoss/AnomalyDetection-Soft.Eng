@@ -42,5 +42,8 @@ int checkTable(Con2DB db, std::string name);
 int createTable(Con2DB db, std::string name, std::vector<std::string> fields);
 void dropTable(Con2DB db, std::string name);
 
+std::string getKey(redisReply *reply, int numero);
+std::string getValue(redisReply *reply, int numero);
+
 int test(redisContext *context);
 #endif
