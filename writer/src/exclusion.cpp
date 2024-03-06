@@ -9,7 +9,9 @@ std::vector<int> exclusionCalc(std::vector<std::string>& current_row){
 
     for (long unsigned int i = 0; i < current_row.size(); ++i) {
         char choice;
-
+        if (current_row[i] == "\r"){
+            continue;
+        }
         cout << "Includere il campo " << i << " (" << current_row[i] << ")? [S/N]: ";
         cin >> choice;
 

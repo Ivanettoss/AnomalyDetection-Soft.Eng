@@ -55,9 +55,15 @@ int init(int argc, char *argv[])
     // Riga in costruzione per la matrice matrix
     vector<string> current_row;
     vector<int> disabled_fields;
+    vector<string> waste;
 
     readLine(buffer, buffer_size, file);
     buildLine(buffer, current_row);
+    if (DEBUGL > 1)
+    {
+        waste = wasteCalc();
+    }
+
     if (DEBUGL > 1)
     {
         disabled_fields = exclusionCalc(current_row);
@@ -71,6 +77,9 @@ int init(int argc, char *argv[])
     matrix.push_back(current_row);
 
     // Leggi il file riga per riga
+    reply = RedisCommand(c2r, "DEL %s", WRITE_STREAM);
+    assertReply(c2r, reply);
+    dumpReply(reply, 0);
     initStreams(c2r, WRITE_STREAM);
     int entry_counter = 0;
     while (true)
@@ -101,28 +110,38 @@ int init(int argc, char *argv[])
         }
 
         // Non inserisco nella pipe le linee nulle
-        if (current_row.size() <= 1){
+        if (current_row.size() <= 1)
+        {
             continue;
         }
 
         reply = RedisCommand(c2r, "XADD %s * %d %s", WRITE_STREAM, entry_counter, stringToChar(input));
+        assertReplyType(c2r, reply, REDIS_REPLY_STRING);
+        printf("main(): pid =%d: stream %s: Added %d -> %s (id: %s)\n", pid, WRITE_STREAM, entry_counter, stringToChar(input), reply->str);
         freeReplyObject(reply);
-    
+
         // PUSH NELLA MATRICE DELLA RIGA CORRETTA
         matrix.push_back(current_row);
     }
 
     fclose(file);
-
-    reply = RedisCommand(c2r, "XREAD BLOCK 0 STREAMS %s 0", WRITE_STREAM);
-    
+    if (DEBUGL > 1)
+    {
+        vector<int> window = windowSelect(entry_counter);
+        float tolerance = selectTolerance();
+        cout << tolerance << endl;
+    }
+    /*
     for (size_t i = 0; i < matrix.size() - 1; i++)
     {
+        reply = RedisCommand(c2r, "XREAD STREAMS %s 0", WRITE_STREAM);
+
         string key = getKey(reply, i);
         cout << key << "   ";
         string value = getValue(reply, i);
         cout << value << endl;
     }
+    */
 
     /*
         for (int i = 0; i < entry_counter; i++)

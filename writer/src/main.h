@@ -22,6 +22,9 @@
 #define PSQL_PORT "5432"
 #define PSQL_DB "AnomalyDetection"
 #define PSQL_SERVER "localhost"
+#define TOLERANCE 50
+
+using namespace std;
 
 int init(int argc, char* argv[]);
 
@@ -33,6 +36,9 @@ char* stringToChar(std::string str);
 int findDomain(std::vector<std::string>& fields, std::string comp);
 std::vector<int> exclusionCalc(std::vector<std::string>& current_row);
 std::vector<std::string> excludeElements(const std::vector<std::string>& current_row, const std::vector<int>& exclude_indices);
+std::vector<std::string> wasteCalc();
+std::vector<int> windowSelect(int entry_counter);
+float selectTolerance();
 
 Con2DB init_connection(const char* server, const char* port, const char* name, const char* pass, const char* db_name);
 int endConnection(Con2DB db);
