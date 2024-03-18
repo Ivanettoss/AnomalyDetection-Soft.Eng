@@ -4,19 +4,19 @@
 
 using namespace std;
 
-//
 int reader()
 {
     redisContext *c2r;
     redisReply *reply;
 
     Con2DB db(PSQL_SERVER, PSQL_PORT, PSQL_NAME, PSQL_PASS, PSQL_DB);
-    // faccio getFields qui per non doverlo fare ad ogni chiamata quando devo fare l'insert nel database
+    // Perform getFields here so it doesn't have to be done on every call when inserting into the database
     vector<string> fields = getFields(db, "log");
 
     int block = 10000;
     int pid;
-    int checkSum; // valore di check per la correttezza delle funzioni
+    // Check value for function fairness
+    int checkSum;
 
     pid = getpid();
 
@@ -44,7 +44,7 @@ int reader()
         printf("new_reader(): pid %d: Sending XREADGROUP (stream: %s, BLOCK: %d)\n", pid, READ_STREAM, block);
         reply = RedisCommand(c2r, "XREADGROUP GROUP diameter lollo BLOCK %d COUNT 1 NOACK STREAMS %s >",
                              block, READ_STREAM);
-        // Controlla se ci sono stati errori nella risposta o se è nulla
+        // Check if there were errors in the response or if it's null
         if (reply->type == REDIS_REPLY_NIL)
         {
             printf("No new infos found in 10 sec interval\n");
@@ -57,15 +57,15 @@ int reader()
             break;
         }
 
-        // Qui devo fare le operazioni di insert dentro la tabella log di ciò che ho letto dal log
+        // Here I need to perform insert operations into the log table with the data read from the log
 
         if (counter <= window[1])
         {
             checkSum = insertDb(db, fields, "log", getValue(reply, 0));
             if (checkSum == -100)
             {
-                cerr << "Error occured: fields quantity not overlapping" << endl;
-                cout << "Error occured: fields quantity not overlapping" << endl;
+                cerr << "Error occurred: fields quantity not overlapping" << endl;
+                cout << "Error occurred: fields quantity not overlapping" << endl;
                 return -1;
             }
         }

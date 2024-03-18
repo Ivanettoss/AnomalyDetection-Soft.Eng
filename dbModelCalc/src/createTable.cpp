@@ -28,27 +28,3 @@ int createTable(Con2DB db, string name, vector<string> fields)
     db.ExecSQLcmd(stringToChar(query));
     return 0;
 }
-
-int checkTable(Con2DB db, string name)
-{
-    string query = "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = '" + name + "');";
-    // Questa query quando viene eseguita ritorna f per false (non trovata), oppure t per true
-    PGresult *result = db.ExecSQLtuples(stringToChar(query));
-    const char *value = PQgetvalue(result, 0, 0);
-    bool r = false;
-    if (strcmp(value, "t") == 0)
-    {
-        r = true;
-    }
-    else
-    {
-        r = false;
-    }
-    return r;
-}
-
-void dropTable(Con2DB db, string name)
-{
-    string query = "drop table \"" + name + "\";";
-    db.ExecSQLcmd(stringToChar(query));
-}

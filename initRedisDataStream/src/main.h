@@ -15,11 +15,8 @@
 #include <hiredis/hiredis.h>
 
 #define BUFFER_SIZE 512
-#define TOLERANCE 50
 
-#define DEBUGFILENAME 0
 #define DEBUGFIELDSSELECT 1
-#define DEBUGWINDOW 1
 
 #define VARCHARDIM "50"
 #define PSQL_NAME "lollo"
@@ -30,32 +27,30 @@
 
 using namespace std;
 
+// Function called by the main program to initialize the Redis stream with CSV file data
 int init(int argc, char* argv[]);
 
+// Read a line from the file and put it into buffer
 void readLine(char* buffer, int buffer_size, FILE* file);
+// Read the buffer and separate the tokens into fields using ";" as delimiter
 void buildLine(char* buffer, vector<string>& fields);
-void printLine(vector<string> fields);
+
+// Debug function used to test the correct functioning, now deprecated
+// void printLine(vector<string> fields);
+
+// Function that converts a string to char*
 char* stringToChar(string str);
 
-int findDomain(vector<string>& fields, string comp);
+// Allows isolating fields that should not be included in calculations
 vector<int> exclusionCalc(vector<string>& current_row);
+// Excludes from the current string vector those that were not enabled with exclusionCalc
 vector<string> excludeElements(const vector<string>& current_row, const vector<int>& exclude_indices);
 
-Con2DB init_connection(const char* server, const char* port, const char* name, const char* pass, const char* db_name);
-int endConnection(Con2DB db);
-void init_log(Con2DB db, vector<string> current_row);
-vector<int> windowSelect(int entrynumber);
-
+// Returns 0 if the table with name <name> does not exist in the database, otherwise 1 if it exists
 int checkTable(Con2DB db, string name);
+// Creates the table <name> within the <db> with fields specified in fields
 int createTable(Con2DB db, string name, vector<string> fields);
+// Deletes the table <name> from the database
 void dropTable(Con2DB db, string name);
-
-string getKey(redisReply *reply, int numero);
-string getValue(redisReply *reply, int numero);
-
-int test(redisContext *context);
-
-// READER FUNCTIONs
-int new_reader();
 
 #endif

@@ -1,40 +1,42 @@
 #include "main.h"
-#include <limits> // Per gestire gli errori di input
+#include <limits> // To handle input errors
 
 using namespace std;
 
 float selectTolerance()
 {
-    float tol;
-    string choice;
-    
+    float tol; // Variable to store tolerance value
+    string choice; // Variable to store user choice for changing tolerance
+
+    // Prompt user to change tolerance
     cout << "Standard tolerance is 50%, would you like to change it [s]/[n]: ";
     cin >> choice;
-    
+
+    // Validate user input for choice
     while(choice != "n" && choice != "s"){
         cout << "Please insert a valid answer. [s]/[n]: ";
         cin >> choice;
     }
 
-    // Se l'utente non desidera cambiare la tolleranza, restituisci il valore predefinito del 50%
+    // If user chooses not to change tolerance, return default value of 50%
     if(choice == "n") {
         return 50.0f;
     }
 
-    // Input per la nuova tolleranza
+    // Input for new tolerance value
     do {
         cout << "Enter the new tolerance value: ";
         cin >> tol;
 
-        // Verifica se l'input non è un float valido
+        // Check if input is not a valid float
         if(cin.fail() || cin.peek() != '\n' || tol < 0) {
             cout << "Invalid input. Please enter a valid value for tolerance." << endl;
-            cin.clear(); // Pulizia dello stato di errore
-            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Ignora il resto della linea
+            cin.clear(); // Clear error state
+            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Ignore rest of the line
         } else {
-            break; // Esci dal ciclo se l'input è valido
+            break; // Exit loop if input is valid
         }
     } while (true);
 
-    return tol;
+    return tol; // Return the selected tolerance value
 }

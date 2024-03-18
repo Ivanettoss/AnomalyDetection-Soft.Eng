@@ -2,16 +2,21 @@
 
 int main()
 {
+    // Establish a connection to the database
     Con2DB db(PSQL_SERVER, PSQL_PORT, PSQL_NAME, PSQL_PASS, PSQL_DB);
+    // Vector to hold waste values
     vector<string> waste;
+    // Tolerance value for anomaly detection
     float tolerance = TOLERANCE;
-    // Vedo se la tabella esiste
+
+    // Check if the "log" table exists
     if (checkTable(db, "log") == 0)
     {
         cout << "Log table has not been initialized" << endl;
         return -1;
     }
-    // Conto le righe nella tabella se esiste
+
+    // Count rows in the table if it exists
     string query = "SELECT COUNT(*) FROM log";
     PGresult *result = (db.ExecSQLtuples(stringToChar(query)));
     int rows = atoi(PQgetvalue(result, 0, 0));
@@ -21,13 +26,15 @@ int main()
         return -1;
     }
     PQclear(result);
-    // Se arrivo a questo punto del codice devo controllare se esiste un modello (medie e covarianze) già calcolato
+
+    // Check if average and covariance models exist
     if (DEBUGWASTE)
     {
-        // inserisci i valori che vengono considerati di guasto
+        // Insert values considered as waste
         waste = wasteCalc();
     }
 
+    // Check if the "average" table exists
     if (checkTable(db, "average") == 0)
     {
         cout << "Average table has not been initialized, proceed with creating it..." << endl;
@@ -35,7 +42,7 @@ int main()
         createTable(db, "average", s);
         initAvgModel(db, waste);
     }
-    // Se arrivo qui vuol dire che il modello è presente
+    // If the average model exists, prompt the user to use it or create a new one
     else
     {
         cout << "The average table has been found, would you like to use it?[s]/[n]" << endl;
@@ -44,57 +51,43 @@ int main()
         cin >> choice;
         if (!(choice == "s" || choice == "S"))
         {
-            // O lo cancello e ne faccio un altro
+            // Drop the existing model and create a new one
             dropTable(db, "average");
             vector<string> s = {"key", "average"};
             createTable(db, "average", s);
             initAvgModel(db, waste);
-            cout << "New average model created succesfully!" << endl;
+            cout << "New average model created successfully!" << endl;
         }
     }
+
+    // Check and manage covariance models
     covDropAsk(db);
 
     PQclear(result);
 
-    // Ora per le covarianze, devo controllare che esistano tutte quelle presenti in average, altrimenti le creo
-    // Ottengo il nome dei campi presenti in average (sono chiavi)
+    // Initialize covariance models if missing
     vector<string> ins = getKeysCov(db, "average");
-    // Per ognuno di questi campi
-    for (size_t i = 0; i < ins.size(); i++)
-    {
-        // Controlla se esiste la tabella chiavamata CovCampo(i)
-        if (checkTable(db, "Cov" + ins[i]))
-        {
-            // Se esiste ok continua
-            continue;
-        }
-        // Se non esiste c'è un problema
-        else
-        {
-            cout << "Unable to find Cov" + ins[i] + " model. Creating it..." << endl;
-            createTable(db, "\"Cov" + ins[i] + "\"", {"field", "covariance"});
-        }
-    }
-
+    initCovModel(db, ins);
     cout << "Covariances tables are ready to be used" << endl;
 
-    // Parte del check anomalies
-    // Inserisci il valore per la tolerance della media, lo standard è il 50%
+    // Anomaly detection process
+    // Set the tolerance value for mean, default is 50%
     if (DEBUGTOLERANCE)
     {
         tolerance = selectTolerance();
     }
 
-    // La tolleranza è espressa in percentuale, devo scorrere tutti i dati presenti nel log e confrontarli per ogni
-    // campo con i valori presenti nella tabella average e nelle tabelle di covarianza
-
+    // Compare each data point in the log with the values in the "average" and covariance tables
     cout << "Calculating anomalies..." << endl;
+    // Drop the existing "anomalies" table if present
     if (checkTable(db, "anomalies") == 1)
     {
         dropTable(db, "anomalies");
     }
+    // Create a new "anomalies" table
     vector<string> s = {"logEntryNumber", "field", "val"};
     createTable(db, "anomalies", s);
+    // Process anomalies
     processAnomalies(db, tolerance);
     cout << "New anomalies table created and filled!" << endl;
     cout << "DONE!" << endl;

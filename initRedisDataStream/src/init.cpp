@@ -18,7 +18,7 @@ int init(int argc, char *argv[])
     freeReplyObject(reply);
     printf("main(): pid %d: connected to redis\n", pid);
 
-    // Aumentare la grandezza del buffer se argc è 3
+    // Choose buffer_size if user specified it, otherwise use 1 block of 512 bytes
     if (argc > 2)
     {
         buffer_size *= atoi(argv[2]);
@@ -30,76 +30,74 @@ int init(int argc, char *argv[])
         return -1;
     }
 
-    // Nome del file CSV da leggere
+    // CSV namefile declaration
     const char *filename = argv[1];
 
-    if (DEBUGFILENAME)
-    {
-        filename = "AirQuality.csv";
-    }
-
-    // Apri il file in modalità lettura
+    // Open file in read mode
     FILE *file = fopen(filename, "r");
 
-    // Verifica se il file è stato aperto correttamente
     if (!file)
     {
-        cerr << " Impossibile aprire il file\n"
-             << filename << endl;
-        return 1;
+        cerr << " \n\nSpecify the name of the CSV file inside the initRedisDataStream/bin folder.\n";
+        cerr << " As <buffer_size>, specify the number of 512-byte blocks to use (if not specified, 1 block will be used).\n";
+        cerr << " ./install.sh <filename.csv> <buffer_size>" << endl;
+        return -1;
     }
 
-    // Buffer per leggere ogni riga del file e vettore di stringhe per i valori dei campi del DB
+    // Buffer to read each line of the file and vector of strings for the DB field values
     char buffer[buffer_size];
-    // Riga in costruzione per la matrice matrix
+    // Constructing row for the matrix
     vector<string> current_row;
     vector<int> enabled_fields;
     vector<string> waste;
 
+    // Read fields first
     readLine(buffer, buffer_size, file);
     buildLine(buffer, current_row);
 
+    // Exclude fields you dont want to process
     if (DEBUGFIELDSSELECT)
     {
         enabled_fields = exclusionCalc(current_row);
-        // Se l'utente esclude tutti i campi
-        if (enabled_fields.size() == 0){
-            cout << "Tutti i campi sono stati esclusi, nessun calcolo possibile" << endl;
+        // If user excludes all fields
+        if (enabled_fields.size() == 0)
+        {
+            cout << "All fields have been excluded, no calculation possible" << endl;
             return 0;
         }
         current_row = excludeElements(current_row, enabled_fields);
     }
-    
-    // Ora ho tutti i campi esclusi quelli che l'utente non vuole, devo chiamare init_log e preparare la tabella
-    Con2DB db = init_connection(PSQL_SERVER, PSQL_PORT, PSQL_NAME, PSQL_PASS, PSQL_DB);
-    init_log(db, current_row);
 
-    // Leggi il file riga per riga
+    // Now I have all fields excluded those that the user does not want, I must call init_log and prepare the table
+    Con2DB db(PSQL_SERVER, PSQL_PORT, PSQL_NAME, PSQL_PASS, PSQL_DB);
+    createTable(db, "log", current_row);
+
+    // Read the file line by line
     initStreams(c2r, WRITE_STREAM);
     int entry_counter = 0;
     while (true)
     {
         if (feof(file) || std::string(buffer).find_first_not_of(';') == std::string::npos)
-        { // Se la riga è vuota o contiene solo caratteri di terminazione
+        { // If the line is empty or contains only termination characters
             break;
         }
-        // PULISCI IL BUFFER DELLA RIGA
+        // CLEAR THE LINE BUFFER
         current_row.clear();
-        // LEGGI DA CSV E METTI IN BUFFER
+        // READ FROM CSV AND PUT INTO BUFFER
         readLine(buffer, buffer_size, file);
 
-        // \r lookingfor
+        // \r lookingfor to normalize the encoded string
         if (buffer[strlen(buffer) - 1] == '\r')
         {
             buffer[strlen(buffer) - 1] = '\0';
         }
 
-        // BUFFER A SINGOLO ELEMENTO ----> CURRENT_ROW CON CAMPI SPLITTATI
+        // BUFFER TO SINGLE ELEMENT ----> CURRENT_ROW WITH SPLIT FIELDS
         buildLine(buffer, current_row);
 
         entry_counter++;
 
-        // ESCLUDI GLI ELEMENTI CHE L'UTENTE NON VUOLE
+        // EXCLUDE ITEMS THAT USER DOES NOT WANT
         if (DEBUGFIELDSSELECT)
         {
             current_row = excludeElements(current_row, enabled_fields);
@@ -111,7 +109,7 @@ int init(int argc, char *argv[])
             input += current_row[i] + " ";
         }
 
-        // Non inserisco nella pipe le linee nulle
+        // Do not insert null lines into the pipe
         if (current_row.size() <= 1)
         {
             continue;
@@ -126,6 +124,6 @@ int init(int argc, char *argv[])
 
     redisFree(c2r);
 
-    int ret = endConnection(db);
-    return ret;
+    db.finish();
+    return 0;
 }
