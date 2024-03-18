@@ -17,7 +17,8 @@ int createTable(Con2DB db, string name, vector<string> fields)
     {
         built += "\"" + fields[fields.size() - 1] + "\"" + " varchar(" + VARCHARDIM + ")";
     }
-    else{
+    else
+    {
         built = built.substr(0, built.length() - 2);
     }
     if (checkTable(db, name))
@@ -51,4 +52,20 @@ void dropTable(Con2DB db, string name)
 {
     string query = "drop table \"" + name + "\";";
     db.ExecSQLcmd(stringToChar(query));
+}
+
+void dropAllCov(Con2DB db)
+{
+    string name;
+    string query = "SELECT table_name AS table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name LIKE 'Cov%';";
+    PGresult *result = db.ExecSQLtuples(stringToChar(query));
+    int row = PQntuples(result);
+    for (int i = 0; i < row; i++)
+    {
+        name = PQgetvalue(result, i, 0);
+        cout << name << endl;
+        if (checkTable(db, name) == 1){
+            dropTable(db, name);
+        }
+    }
 }

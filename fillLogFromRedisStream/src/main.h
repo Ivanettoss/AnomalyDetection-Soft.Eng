@@ -15,7 +15,9 @@
 #include <hiredis/hiredis.h>
 
 #define BUFFER_SIZE 512
-#define DEBUGL 1
+
+#define DEBUGWINDOWSELECT 1
+
 #define VARCHARDIM "50"
 #define PSQL_NAME "lollo"
 #define PSQL_PASS "lollo"

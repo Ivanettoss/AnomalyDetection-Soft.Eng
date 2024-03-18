@@ -33,92 +33,71 @@ int main()
         cout << "Average table has not been initialized, proceed with creating it..." << endl;
         vector<string> s = {"key", "average"};
         createTable(db, "average", s);
-        fillAvgModel(db, waste);
+        initAvgModel(db, waste);
     }
     // Se arrivo qui vuol dire che il modello è presente
     else
     {
-        cout << "Average table has been found, would you like to use it?[s]/[n]" << endl;
-        cout << "If the choice is NO and log table is found a new model will be created based on the new log" << endl;
+        cout << "The average table has been found, would you like to use it?[s]/[n]" << endl;
+        cout << "If the choice is \"n\" a new model will be created based on the new log" << endl;
         string choice;
         cin >> choice;
-        if (!(choice == "s" || choice == "S")){
+        if (!(choice == "s" || choice == "S"))
+        {
             // O lo cancello e ne faccio un altro
             dropTable(db, "average");
             vector<string> s = {"key", "average"};
             createTable(db, "average", s);
-            fillAvgModel(db, waste);
+            initAvgModel(db, waste);
             cout << "New average model created succesfully!" << endl;
         }
     }
+    covDropAsk(db);
 
-    // Ora per le covarianze
     PQclear(result);
-    
-    if (checkTable(db, "covariance") == 0)
+
+    // Ora per le covarianze, devo controllare che esistano tutte quelle presenti in average, altrimenti le creo
+    // Ottengo il nome dei campi presenti in average (sono chiavi)
+    vector<string> ins = getKeysCov(db, "average");
+    // Per ognuno di questi campi
+    for (size_t i = 0; i < ins.size(); i++)
     {
-        cout << "The covariance tables have not been initialized. Proceed with creating them..." << endl;
-        
-        vector<string> s = {"key", "average"};
-        createTable(db, "average", s);
-        fillAvgModel(db, waste);
-    }
-    // Se arrivo qui vuol dire che il modello è presente
-    else
-    {
-        cout << "Average table has been found, would you like to use it?[s]/[n]" << endl;
-        cout << "If the choice is NO and log table is found a new model will be created based on the new log" << endl;
-        string choice;
-        cin >> choice;
-        if (!(choice == "s" || choice == "S")){
-            // O lo cancello e ne faccio un altro
-            dropTable(db, "average");
-            vector<string> s = {"key", "average"};
-            createTable(db, "average", s);
-            fillAvgModel(db, waste);
-            cout << "New average model created succesfully!" << endl;
+        // Controlla se esiste la tabella chiavamata CovCampo(i)
+        if (checkTable(db, "Cov" + ins[i]))
+        {
+            // Se esiste ok continua
+            continue;
+        }
+        // Se non esiste c'è un problema
+        else
+        {
+            cout << "Unable to find Cov" + ins[i] + " model. Creating it..." << endl;
+            createTable(db, "\"Cov" + ins[i] + "\"", {"field", "covariance"});
         }
     }
 
+    cout << "Covariances tables are ready to be used" << endl;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // O uso quello presente per trovare le anomalie
-    
-
+    // Parte del check anomalies
     // Inserisci il valore per la tolerance della media, lo standard è il 50%
     if (DEBUGTOLERANCE)
     {
         tolerance = selectTolerance();
     }
 
-    if (DEBUGWINDOW)
-    {
-        vector<int> window = windowSelect(rows - 1);
-    }
+    // La tolleranza è espressa in percentuale, devo scorrere tutti i dati presenti nel log e confrontarli per ogni
+    // campo con i valori presenti nella tabella average e nelle tabelle di covarianza
 
-    return tolerance;
+    cout << "Calculating anomalies..." << endl;
+    if (checkTable(db, "anomalies") == 1)
+    {
+        dropTable(db, "anomalies");
+    }
+    vector<string> s = {"logEntryNumber", "field", "val"};
+    createTable(db, "anomalies", s);
+    processAnomalies(db, tolerance);
+    cout << "New anomalies table created and filled!" << endl;
+    cout << "DONE!" << endl;
+
+    return 0;
 }

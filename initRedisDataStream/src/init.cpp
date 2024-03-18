@@ -53,7 +53,7 @@ int init(int argc, char *argv[])
     char buffer[buffer_size];
     // Riga in costruzione per la matrice matrix
     vector<string> current_row;
-    vector<int> disabled_fields;
+    vector<int> enabled_fields;
     vector<string> waste;
 
     readLine(buffer, buffer_size, file);
@@ -61,10 +61,15 @@ int init(int argc, char *argv[])
 
     if (DEBUGFIELDSSELECT)
     {
-        disabled_fields = exclusionCalc(current_row);
-        current_row = excludeElements(current_row, disabled_fields);
+        enabled_fields = exclusionCalc(current_row);
+        // Se l'utente esclude tutti i campi
+        if (enabled_fields.size() == 0){
+            cout << "Tutti i campi sono stati esclusi, nessun calcolo possibile" << endl;
+            return 0;
+        }
+        current_row = excludeElements(current_row, enabled_fields);
     }
-
+    
     // Ora ho tutti i campi esclusi quelli che l'utente non vuole, devo chiamare init_log e preparare la tabella
     Con2DB db = init_connection(PSQL_SERVER, PSQL_PORT, PSQL_NAME, PSQL_PASS, PSQL_DB);
     init_log(db, current_row);
@@ -97,7 +102,7 @@ int init(int argc, char *argv[])
         // ESCLUDI GLI ELEMENTI CHE L'UTENTE NON VUOLE
         if (DEBUGFIELDSSELECT)
         {
-            current_row = excludeElements(current_row, disabled_fields);
+            current_row = excludeElements(current_row, enabled_fields);
         }
 
         string input;
@@ -114,8 +119,6 @@ int init(int argc, char *argv[])
 
         reply = RedisCommand(c2r, "XADD %s * %d %s", WRITE_STREAM, entry_counter, stringToChar(input));
         assertReplyType(c2r, reply, REDIS_REPLY_STRING);
-        // dumpReply(reply, 1);
-        // printf("main(): pid =%d: stream %s: Added %d -> %s (id: %s)\n", pid, WRITE_STREAM, entry_counter, stringToChar(input), reply->str);
         freeReplyObject(reply);
     }
 

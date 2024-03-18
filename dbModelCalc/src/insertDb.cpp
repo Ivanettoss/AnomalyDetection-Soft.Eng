@@ -24,7 +24,6 @@ int insertDb(Con2DB db, vector<string> fields, string tableName, string data)
     }
     query += "\"" + fields[fields.size() - 1] + "\"" + ")" + " VALUES (";
     vector<string> dataSplit = split(data);
-
     // checkSum
     if (dataSplit.size() != fields.size())
     {
@@ -36,8 +35,6 @@ int insertDb(Con2DB db, vector<string> fields, string tableName, string data)
         query += "\'" + dataSplit[i] + "\', ";
     }
     query += "\'" + dataSplit[dataSplit.size() - 1] + "\'" + ");";
-
-    //cout << query << endl;
     db.ExecSQLcmd(stringToChar(query));
 
     return 0;

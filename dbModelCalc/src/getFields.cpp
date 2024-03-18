@@ -15,3 +15,15 @@ vector<string> getFields(Con2DB db, string name)
     }
     return fields;
 }
+
+vector<string> getKeysCov(Con2DB db, string name)
+{
+    string query = "SELECT key from " + name + ";";
+    PGresult *result = db.ExecSQLtuples(stringToChar(query));
+    vector<string> ins = {};
+    for (int i = 0; i < PQntuples(result); i++)
+    {
+        ins.push_back(PQgetvalue(result, i, 0));
+    }
+    return ins;
+}

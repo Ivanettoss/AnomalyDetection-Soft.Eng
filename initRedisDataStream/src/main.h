@@ -19,6 +19,7 @@
 
 #define DEBUGFILENAME 0
 #define DEBUGFIELDSSELECT 1
+#define DEBUGWINDOW 1
 
 #define VARCHARDIM "50"
 #define PSQL_NAME "lollo"
@@ -43,6 +44,7 @@ vector<string> excludeElements(const vector<string>& current_row, const vector<i
 Con2DB init_connection(const char* server, const char* port, const char* name, const char* pass, const char* db_name);
 int endConnection(Con2DB db);
 void init_log(Con2DB db, vector<string> current_row);
+vector<int> windowSelect(int entrynumber);
 
 int checkTable(Con2DB db, string name);
 int createTable(Con2DB db, string name, vector<string> fields);
